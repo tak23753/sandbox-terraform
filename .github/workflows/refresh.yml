@@ -1,0 +1,43 @@
+name: Refresh sandbox aws account
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 毎月1日の0時に実行
+    - cron: '0 0 1 * *'
+
+env:
+  AWS_REGION: ap-northeast-1
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/sandbox-github-actions-terraform-role
+          role-session-name: sandbox-github-actions-terraform-session
+          aws-region: ${{ env.AWS_REGION }}
+
+      # envsubstで環境変数を展開してからaws-nukeを実行する
+      - name: Run aws-nuke
+        run: |
+          envsubst < nuke-config.yml > nuke-config.yml.tmp
+          cat nuke-config.yml.tmp
+          docker run \
+          -v $(pwd)/nuke-config.yml.tmp:/home/aws-nuke/config.yml \
+          -v ~/.aws:/home/aws-nuke/.aws \
+          -e AWS_ACCESS_KEY_ID \
+          -e AWS_SECRET_ACCESS_KEY \
+          -e AWS_SESSION_TOKEN \
+          quay.io/rebuy/aws-nuke:v2.23.0 \
+          --config /home/aws-nuke/config.yml \
+          --force --quiet --no-dry-run

@@ -1,0 +1,34 @@
+regions:
+- ${AWS_REGION}
+- global
+account-blocklist:
+- 123456789012
+accounts:
+  ${AWS_ACCOUNT_ID}:
+    filters:
+      DynamoDBTable:
+        - 'sandbox-terraform-lock-dynamodb-table'
+      DynamoDBTableItem:
+        - 'sandbox-terraform-lock-dynamodb-table -> sandbox-terraform-state-${AWS_ACCOUNT_ID}-s3-bucket/./terraform.tfstate-md5'
+      S3Bucket:
+        - 's3://sandbox-terraform-state-${AWS_ACCOUNT_ID}-s3-bucket'
+      S3Object:
+        - 's3://sandbox-terraform-state-${AWS_ACCOUNT_ID}-s3-bucket/terraform.tfstate'
+      IAMOpenIDConnectProvider:
+        - 'arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com'
+      IAMSAMLProvider:
+        - type: glob
+          value: 'arn:aws:iam::${AWS_ACCOUNT_ID}:saml-provider/AWSSSO_*_DO_NOT_DELETE'
+      IAMRole:
+        - 'OrganizationAccountAccessRole'
+        - 'sandbox-github-actions-terraform-role'
+      IAMRolePolicyAttachment:
+        - 'OrganizationAccountAccessRole -> AdministratorAccess'
+        - 'sandbox-github-actions-terraform-role -> AdministratorAccess'
+
+feature-flags:
+  disable-deletion-protection:
+    RDSInstance: true
+    EC2Instance: true
+    CloudformationStack: true
+  force-delete-lightsail-addons: true
