@@ -3,8 +3,8 @@ name: Refresh sandbox aws account
 on:
   workflow_dispatch:
   schedule:
-    # 毎月1日の0時に実行
-    - cron: '0 0 1 * *'
+    # 日本時間の毎月1日の24時に実行
+    - cron: '0 15 1 * *'
 
 env:
   AWS_REGION: ap-northeast-1
